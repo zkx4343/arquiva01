@@ -1,0 +1,51 @@
+name: Verificar projeto
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Impedir segredos versionados
+        shell: bash
+        run: |
+          if git grep -nE 'sb_secret_[A-Za-z0-9_-]{20,}|GOCSPX-[A-Za-z0-9_-]{20,}|AIza[0-9A-Za-z_-]{30,}|1//[0-9A-Za-z_-]{30,}|"private_key"[[:space:]]*:|-----BEGIN (RSA |EC )?PRIVATE KEY-----' -- . ':(exclude).github/workflows/ci.yml' ':(exclude).env.example' ':(exclude)supabase/functions/.env.example'; then
+            echo 'Possível segredo encontrado em um arquivo versionado.'
+            exit 1
+          fi
+
+      - name: Preparar pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 10
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Verificar tipos
+        run: pnpm typecheck
+
+      - name: Verificar qualidade do código
+        run: pnpm lint
+
+      - name: Gerar versão de produção
+        run: pnpm build

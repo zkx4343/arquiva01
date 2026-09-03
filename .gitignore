@@ -1,0 +1,49 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/.vinext/
+/out/
+
+# misc
+.DS_Store
+*.pem
+*.key
+credentials*.json
+service-account*.json
+/secrets/
+*-oauth-client.json
+*-service-account.json
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local environment
+.env*
+!.env.example
+.dev.vars*
+!.dev.vars.example
+
+# deployment and generated files
+.vercel
+next-env.d.ts
+*.tsbuildinfo
+/dist/
+/.wrangler/
+/supabase/.temp/
+/outputs/
+/work/

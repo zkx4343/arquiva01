@@ -1,0 +1,4 @@
+project_id = "arquiva"
+
+[functions.arquiva-api]
+verify_jwt = true

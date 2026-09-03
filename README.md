@@ -1,42 +1,43 @@
 # Arquiva
 
-Gerenciador privado e responsivo de documentos, imagens, áudios, vídeos e outros arquivos. O Arquiva oferece busca, pastas, favoritos, lixeira, pré-visualização, modo claro/escuro e configurações por dispositivo.
+Gerenciador privado e responsivo de documentos, imagens, áudios, vídeos e
+outros arquivos. A interface roda como site estático no GitHub Pages, o
+Supabase cuida do login, das pastas e dos metadados, e o Google Drive guarda os
+arquivos.
+
+## Recursos
+
+- Upload de vários tipos de arquivo, até 25 MB por item.
+- Pré-visualização autenticada de imagens, PDFs, textos, áudios e vídeos.
+- Busca, filtros, favoritos, lixeira e pastas fáceis de criar, renomear e
+  excluir.
+- Layout adaptado a computador, tablet e celular, inclusive captura pela
+  câmera.
+- Modos claro, escuro e automático, cores e densidade configuráveis.
+- Espaço livre igual ao da conta Google, consultado no Drive a cada 15 segundos
+  e após alterações.
+- Supabase Auth, políticas RLS por usuário e credenciais do Drive guardadas
+  somente na Edge Function.
 
 ## Arquitetura
 
-- Supabase Auth controla o acesso e as sessões.
-- Google Drive guarda o conteúdo dos arquivos.
-- Cloudflare D1 guarda apenas a organização: nomes, pastas, favoritos e referências internas.
-- OpenAI Sites/Cloudflare executa a aplicação.
-- GitHub privado mantém o código e executa as verificações automáticas.
+```text
+GitHub Pages (React/Vite)
+        ↓ JWT do usuário
+Supabase Auth + Edge Function + Postgres/RLS
+        ↓ OAuth privado
+Google Drive
+```
 
-Cada consulta de arquivo e pasta é limitada ao identificador do usuário autenticado. O navegador nunca recebe a credencial da conta de serviço do Google.
+O navegador recebe apenas a chave **publicável** do Supabase. Client secret,
+refresh token e qualquer credencial do Google ficam nos Secrets da Edge
+Function e nunca entram no bundle do site.
 
-## Configuração local
+## Desenvolvimento
 
-1. Copie `.dev.vars.example` para `.dev.vars`.
-2. Preencha a URL e uma chave **publicável** do Supabase.
-3. Escolha uma forma de acesso ao Google Drive:
-   - **Drive pessoal (gratuito):** preencha `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` e `GOOGLE_OAUTH_REFRESH_TOKEN` de um consentimento OAuth da conta proprietária.
-   - **Google Workspace:** preencha os dados de uma nova conta de serviço e conceda a ela acesso a uma pasta em um Shared Drive.
-4. Defina `GOOGLE_DRIVE_ROOT_FOLDER_ID` com o ID da pasta dedicada ao Arquiva.
-5. Ajuste `ARQUIVA_USER_STORAGE_QUOTA_BYTES` se quiser alterar a cota padrão de 10 GB por usuário.
-6. Instale as dependências com `pnpm install` e execute `pnpm dev`.
-
-Configure apenas uma das formas de acesso ao Drive. Se as duas estiverem completas, o OAuth do Drive pessoal tem prioridade. O identificador da pasta aparece na URL do Drive ao abri-la.
-
-Para uma visualização local sem login, `ARQUIVA_DEV_BYPASS_AUTH=true` funciona somente fora de produção.
-
-## Segurança
-
-- Nunca salve chaves secretas no Git, em issues ou em mensagens.
-- Arquivos `.env*`, `.dev.vars*`, chaves privadas e JSONs de contas de serviço são ignorados.
-- Use apenas `SUPABASE_PUBLISHABLE_KEY`; o Arquiva não precisa de `sb_secret`.
-- Segredos de produção devem ficar nas variáveis criptografadas do serviço de hospedagem.
-- Tokens OAuth e chaves privadas permanecem no servidor e nunca são enviados ao navegador.
-- Contas de serviço não possuem armazenamento pessoal gratuito; use OAuth para uma conta pessoal ou uma pasta em Shared Drive.
-- Use uma pasta exclusiva do Arquiva e conceda acesso somente a quem realmente precisa dela.
-- O envio aplica uma cota cumulativa por usuário; arquivos na lixeira ainda ocupam espaço até serem excluídos permanentemente.
+1. Copie `.env.example` para `.env.local`.
+2. Preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY`.
+3. Execute `pnpm install` e `pnpm dev`.
 
 ## Verificações
 
@@ -46,5 +47,8 @@ pnpm lint
 pnpm build
 ```
 
-O fluxo em `.github/workflows/ci.yml` executa essas verificações em cada atualização e pull request.
+## Publicação
 
+O passo a passo completo, incluindo rotação de credenciais, OAuth do Drive,
+Supabase, GitHub Actions e GitHub Pages, está em
+[`docs/GUIA_PUBLICACAO.md`](docs/GUIA_PUBLICACAO.md).
